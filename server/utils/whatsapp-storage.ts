@@ -16,7 +16,13 @@ export async function defineWhatsAppStorage<Device>(callback: DefineWhatsAppStor
         await _storage.setItemRaw(`${basePath}:${id}`, value as any)
       },
       get: async (id: string) => {
-        return _storage.getItemRaw<T>(`${basePath}:${id}`)
+        try {
+          const item = await _storage.getItemRaw<T>(`${basePath}:${id}`)
+          return item
+        } catch (error) {
+          console.error(error);
+          return null
+        }
       },
       remove: async (id: string) => {
         await _storage.remove(`${basePath}:${id}`)
@@ -28,23 +34,16 @@ export async function defineWhatsAppStorage<Device>(callback: DefineWhatsAppStor
   const device = {
     get: async (deviceId: string) => {
       try {
-
-        console.log(`finding device ${deviceId}`);
         let existingDevice: Device | null = await _storage.getItemRaw<Device>(`${devicePath}:${deviceId}`)
-        console.log({ existingDevice });
 
         if (!existingDevice) {
-          console.log(`device ${deviceId} not found, finding it from db`);
           existingDevice = await callback.findDevice(deviceId)
-          if (!existingDevice) {
-            return null
+          if (existingDevice) {
+            await _storage.setItemRaw(`${devicePath}:${deviceId}`, existingDevice as any)
           }
-
-          await _storage.setItemRaw(`${devicePath}:${deviceId}`, existingDevice as any)
         }
 
         return existingDevice
-
       } catch (error) {
         console.error(error)
         return null
