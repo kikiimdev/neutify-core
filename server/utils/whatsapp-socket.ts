@@ -9,7 +9,8 @@ export type WASocket = ReturnType<MakeWASocket>
 export const makeWASocket = ((_makeWASocket as any)?.default) as MakeWASocket ?? _makeWASocket
 
 type DefineWhatsAppSocketOpts<Device> = {
-  storage: Awaited<DefineWhatsAppStorage<Device>>
+  storage: Awaited<DefineWhatsAppStorage<Device>>,
+  logger?: any
 }
 
 export async function defineWhatsAppSocket<Device>(deviceId: string, opts: DefineWhatsAppSocketOpts<Device>) {
@@ -24,7 +25,7 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
     // @ts-ignore
     browser: [`${process.env.NUXT_APP_NAME} | ${device.name}`, "MacOs", "1.0.0"],
     version,
-    // logger: undefined,
+    logger: opts.logger,
     printQRInTerminal: true,
     auth: state,
     // msgRetryCounterCache,
