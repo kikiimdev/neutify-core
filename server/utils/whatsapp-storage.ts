@@ -29,9 +29,17 @@ export async function defineWhatsAppStorage<Device>(callback: DefineWhatsAppStor
     get: async (deviceId: string) => {
       try {
 
+        console.log(`finding device ${deviceId}`);
         let existingDevice: Device | null = await _storage.getItemRaw<Device>(`${devicePath}:${deviceId}`)
+        console.log({ existingDevice });
+
         if (!existingDevice) {
+          console.log(`device ${deviceId} not found, finding it from db`);
           existingDevice = await callback.findDevice(deviceId)
+          if (!existingDevice) {
+            return null
+          }
+
           await _storage.setItemRaw(`${devicePath}:${deviceId}`, existingDevice as any)
         }
 
