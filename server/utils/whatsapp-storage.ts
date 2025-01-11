@@ -27,13 +27,20 @@ export async function defineWhatsAppStorage<Device>(callback: DefineWhatsAppStor
   const devicePath = 'device'
   const device = {
     get: async (deviceId: string) => {
-      let existingDevice: Device | null = await _storage.getItemRaw<Device>(`${devicePath}:${deviceId}`)
-      if (!existingDevice) {
-        existingDevice = await callback.findDevice(deviceId)
-        await _storage.setItemRaw(`${devicePath}:${deviceId}`, existingDevice as any)
-      }
+      try {
 
-      return existingDevice
+        let existingDevice: Device | null = await _storage.getItemRaw<Device>(`${devicePath}:${deviceId}`)
+        if (!existingDevice) {
+          existingDevice = await callback.findDevice(deviceId)
+          await _storage.setItemRaw(`${devicePath}:${deviceId}`, existingDevice as any)
+        }
+
+        return existingDevice
+
+      } catch (error) {
+        console.error(error)
+        return null
+      }
     },
     remove: async (deviceId: string) => {
       await _storage.remove(`${devicePath}:${deviceId}`)
