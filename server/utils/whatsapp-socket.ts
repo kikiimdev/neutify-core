@@ -1,5 +1,5 @@
 import type { Boom } from '@hapi/boom'
-import { default as _makeWASocket, DisconnectReason, fetchLatestBaileysVersion, isJidBroadcast, useMultiFileAuthState } from '@whiskeysockets/baileys'
+import { default as _makeWASocket, DisconnectReason, fetchLatestBaileysVersion, isJidBroadcast, useMultiFileAuthState, type UserFacingSocketConfig } from '@whiskeysockets/baileys'
 import { rm } from "fs/promises"
 import type { DefineWhatsAppStorage } from './whatsapp-storage'
 import { parseContactId } from './parse-contact-id'
@@ -8,25 +8,26 @@ type MakeWASocket = typeof _makeWASocket
 export type WASocket = ReturnType<MakeWASocket>
 export const makeWASocket = ((_makeWASocket as any)?.default) as MakeWASocket ?? _makeWASocket
 
-type DefineWhatsAppSocketOpts<Device> = {
+type CustomConfig = Omit<UserFacingSocketConfig, 'auth' | 'browser' | 'version' | 'generateHighQualityLinkPreview' | 'shouldIgnoreJid'>
+type DefineWhatsAppSocketOpts<Device> = CustomConfig & {
   storage: Awaited<DefineWhatsAppStorage<Device>>,
-  logger?: any
 }
 
 export async function defineWhatsAppSocket<Device>(deviceId: string, opts: DefineWhatsAppSocketOpts<Device>) {
-  const { storage } = opts
+  const { storage, ...socketConfig } = opts
   const device = await storage.device.get(deviceId)
   const { state, saveCreds } = await useMultiFileAuthState(`.whatsapp/${deviceId}/session`)
   // fetch latest version of WA Web
   const { version, isLatest } = await fetchLatestBaileysVersion()
-  console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
+  // TODO: create a webhook if whatsapp not latest version
+  // console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
 
   const sock = makeWASocket({
     // @ts-ignore
     browser: [`${process.env.NUXT_APP_NAME} | ${device.name}`, "MacOs", "1.0.0"],
     version,
-    logger: opts.logger,
-    printQRInTerminal: true,
+    // logger: opts.logger,
+    // printQRInTerminal: true,
     auth: state,
     // msgRetryCounterCache,
     generateHighQualityLinkPreview: true,
@@ -35,6 +36,8 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
     shouldIgnoreJid: jid => isJidBroadcast(jid),
     // implement to handle retries & poll updates
     // getMessage,
+    //
+    ...socketConfig
   })
 
   await storage.socket.set(deviceId, sock)
@@ -126,7 +129,8 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
           }
         }
 
-        console.log('connection update', update)
+        // TODO: create webhook for connection update
+        // console.log('connection update', update)
       }
 
       // credentials updated -- save them
@@ -137,6 +141,7 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
       // received a new message
       if (events['messages.upsert']) {
         const upsert = events['messages.upsert']
+        // TODO: create webhook for incoming message
         // console.log('recv messages ', JSON.stringify(upsert, undefined, 2))
 
         if (upsert.type === 'notify') {
