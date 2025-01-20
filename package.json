@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "latest",
+    "@types/amqplib": "^0.10.6",
     "eslint": "^9.17.0",
     "nuxt": "^3.15.1",
     "typescript": "^5.7.2",
@@ -20,6 +21,7 @@
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "^6.7.9"
+    "@whiskeysockets/baileys": "^6.7.9",
+    "amqplib": "^0.10.5"
   }
 }
