@@ -13,9 +13,11 @@ export async function defineWhatsAppStorage<Device>(callback: DefineWhatsAppStor
   const defaultStorage = <T>(basePath: string) => {
     return {
       set: async (id: string, value: T) => {
+        console.log(`Set ${basePath}:${id}`, value)
         await _storage.setItemRaw(`${basePath}:${id}`, value as any)
       },
       get: async (id: string) => {
+        console.log(`Get ${basePath}:${id}`)
         try {
           const item = await _storage.getItemRaw<T>(`${basePath}:${id}`)
           return item
