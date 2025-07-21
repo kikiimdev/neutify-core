@@ -1,5 +1,5 @@
 import type { Boom } from '@hapi/boom'
-import { default as _makeWASocket, DisconnectReason, fetchLatestBaileysVersion, isJidBroadcast, useMultiFileAuthState, type UserFacingSocketConfig } from '@whiskeysockets/baileys'
+import { default as _makeWASocket, DisconnectReason, downloadMediaMessage, fetchLatestBaileysVersion, getContentType, isJidBroadcast, useMultiFileAuthState, type UserFacingSocketConfig } from '@whiskeysockets/baileys'
 import { rm } from "fs/promises"
 import type { DefineWhatsAppStorage } from './whatsapp-storage'
 import { parseContactId } from './parse-contact-id'
@@ -141,14 +141,71 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
       // received a new message
       if (events['messages.upsert']) {
         const upsert = events['messages.upsert']
-        // TODO: create webhook for incoming message
-        // console.log('recv messages ', JSON.stringify(upsert, undefined, 2))
 
-        if (upsert.type === 'notify') {
-          for (const upcomingMessage of upsert.messages) {
-            // console.log('upcomingMessage ', JSON.stringify(upcomingMessage, undefined, 2));
+        const m = upsert.messages[0]
+        if (!m.message) return // if there is no text or media message
+        if (m.key.fromMe) return
+
+        const sender = {
+          jId: parseContactId(m.key.remoteJid).jId,
+          phone: parseContactId(m.key.remoteJid).phoneNumber,
+          name: m.verifiedBizName || m.pushName
+        }
+        const content: Record<string, unknown> = {}
+
+        const messageType = getContentType(m.message)
+
+        const text = m.message.conversation || m.message?.imageMessage?.caption || m.message?.extendedTextMessage?.text
+        if (text) {
+          content.text = text
+        }
+
+        // if the message is an image
+        if (messageType === 'imageMessage') {
+          // download the message
+          const buffer = await downloadMediaMessage(
+            m,
+            'buffer',
+            {}
+          )
+
+          const base64 = `data:${m.message?.imageMessage?.mimetype};base64,` + buffer.toString('base64')
+          const mimetype = m.message?.imageMessage?.mimetype
+
+          content.image = {
+            // base64,
+            mimetype
           }
         }
+
+        if (messageType === 'extendedTextMessage') {
+          const q = m.message?.extendedTextMessage?.contextInfo?.quotedMessage
+          const quotedMessageType = getContentType(q)
+          const quotedMessage: Record<string, unknown> = {}
+
+          const qText = q.conversation || q?.imageMessage?.caption || q?.extendedTextMessage?.text
+          if (qText) {
+            quotedMessage.text = qText
+          }
+
+          content.contextInfo = {
+            stanzaId: m.message?.extendedTextMessage?.contextInfo?.stanzaId,
+            participant: m.message?.extendedTextMessage?.contextInfo?.participant,
+            quotedMessageType,
+            quotedMessage
+          }
+        }
+
+        const data = {
+          sender,
+          messageType,
+          content
+        }
+
+        // TODO: create webhook for incoming message
+        // console.log('upcomingMessage ', JSON.stringify(m, undefined, 2));
+        // console.log('parsedMessage ', JSON.stringify(data, undefined, 2));
+
       }
     }
   )
