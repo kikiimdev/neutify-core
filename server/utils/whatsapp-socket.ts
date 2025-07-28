@@ -1,5 +1,5 @@
 import type { Boom } from '@hapi/boom'
-import { default as _makeWASocket, DisconnectReason, downloadMediaMessage, fetchLatestBaileysVersion, getContentType, isJidBroadcast, useMultiFileAuthState, type UserFacingSocketConfig } from '@whiskeysockets/baileys'
+import { default as _makeWASocket, DisconnectReason, downloadMediaMessage, fetchLatestBaileysVersion, getContentType, isJidBroadcast, useMultiFileAuthState, type UserFacingSocketConfig, type WAVersion } from '@whiskeysockets/baileys'
 import { rm } from "fs/promises"
 import type { DefineWhatsAppStorage } from './whatsapp-storage'
 import { parseContactId } from './parse-contact-id'
@@ -19,13 +19,14 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
   const { state, saveCreds } = await useMultiFileAuthState(`.whatsapp/${deviceId}/session`)
   // fetch latest version of WA Web
   const { version, isLatest } = await fetchLatestBaileysVersion()
+  const manualVersion = [2, 3000, 1025190524] as WAVersion
   // TODO: create a webhook if whatsapp not latest version
   // console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
 
   const sock = makeWASocket({
     // @ts-ignore
     browser: [`${process.env.NUXT_APP_NAME} | ${device.name}`, "MacOs", "1.0.0"],
-    version,
+    version: manualVersion,
     // logger: opts.logger,
     // printQRInTerminal: true,
     auth: state,
