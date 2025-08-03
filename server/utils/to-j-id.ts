@@ -8,7 +8,7 @@ export const toJId = (whatsAppNumber: string | number, opts: ToJIdOpts = {}) => 
     isGroup = false,
   } = opts
 
-  if (String(whatsAppNumber).includes("@g.us") || String(whatsAppNumber).includes("@s.whatsapp.net")) {
+  if (String(whatsAppNumber).includes("@g.us") || String(whatsAppNumber).includes("@s.whatsapp.net") || String(whatsAppNumber).includes("@newsletter")) {
     return String(whatsAppNumber)
   }
 

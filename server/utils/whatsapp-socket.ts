@@ -203,7 +203,7 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
           content
         }
 
-        console.log(`New message from ${sender.name} (${sender.phone})`, sender)
+        console.log(`New message from ${sender.name} (${sender.phone})`)
 
         // TODO: create webhook for incoming message
         // console.log('upcomingMessage ', JSON.stringify(m, undefined, 2));
