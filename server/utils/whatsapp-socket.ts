@@ -3,6 +3,7 @@ import { default as _makeWASocket, DisconnectReason, downloadMediaMessage, fetch
 import { rm } from "fs/promises"
 import type { DefineWhatsAppStorage } from './whatsapp-storage'
 import { parseContactId } from './parse-contact-id'
+import https from "https"
 
 type MakeWASocket = typeof _makeWASocket
 export type WASocket = ReturnType<MakeWASocket>
@@ -23,8 +24,11 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
   // TODO: create a webhook if whatsapp not latest version
   // console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
 
+  const httpsAgent = new https.Agent({
+    rejectUnauthorized: false, // <--- temporarily disable cert validation
+  });
+
   const sock = makeWASocket({
-    // @ts-ignore
     browser: [`${process.env.NUXT_APP_NAME} | ${device.name}`, "MacOs", "1.0.0"],
     version: manualVersion,
     // logger: opts.logger,
@@ -38,6 +42,7 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
     // implement to handle retries & poll updates
     // getMessage,
     //
+    fetchAgent: httpsAgent,
     ...socketConfig
   })
 
