@@ -30,7 +30,8 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
 
   const sock = makeWASocket({
     browser: [`${process.env.NUXT_APP_NAME} | ${device.name}`, "MacOs", "1.0.0"],
-    version: manualVersion,
+    // version: manualVersion,
+    version: version,
     // logger: opts.logger,
     // printQRInTerminal: true,
     auth: state,
