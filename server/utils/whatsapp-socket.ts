@@ -43,7 +43,7 @@ export async function defineWhatsAppSocket<Device>(deviceId: string, opts: Defin
     // implement to handle retries & poll updates
     // getMessage,
     //
-    fetchAgent: httpsAgent,
+    // fetchAgent: httpsAgent,
     ...socketConfig
   })
 
