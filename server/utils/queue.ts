@@ -94,8 +94,14 @@ export const defineQueueConnection = async () => {
   newConnection.on("close", () => {
     console.error("[RabbitMQ] Connection closed. Reconnecting...");
     connection = null;
+    const existingChannels = channels.keys()
     channels.clear();
-    setTimeout(defineQueueConnection, 3000);
+    setTimeout(async () => {
+      const c = await defineQueueConnection()
+      for (const channel of existingChannels) {
+        await defineQueueChannel(c, channel)
+      }
+    }, 3000);
   });
 
   await useStorage('ampq').setItemRaw('connection', newConnection)
