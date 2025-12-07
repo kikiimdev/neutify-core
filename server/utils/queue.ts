@@ -1,4 +1,4 @@
-import amqp, { type Connection, type Channel, connect } from "amqplib";
+import amqp, { type Connection, type Channel, connect, type Options } from "amqplib";
 
 let connection: Connection | null = null;
 const channels: Map<string, Channel> = new Map();
@@ -68,7 +68,36 @@ export const defineQueueConnection = async () => {
   if (existingConnection) {
     return existingConnection
   }
-  const newConnection = await connect(`amqp://${USERNAME}:${PASSWORD}@${URL}:${PORT}`)
+
+  // const newConnection = await connect(
+  //   `amqp://${USERNAME}:${PASSWORD}@${URL}:${PORT}`,
+  // )
+
+  const connectionOptions = {
+    protocol: 'amqp',
+    hostname: URL,
+    port: Number(PORT),
+    username: USERNAME,
+    password: PASSWORD,
+    vhost: '/',
+    heartbeat: 30,
+  } satisfies Options.Connect;
+
+  const newConnection = await connect(
+    connectionOptions
+  )
+
+  newConnection.on("error", err => {
+    console.error("[RabbitMQ] Connection error", err);
+  });
+
+  newConnection.on("close", () => {
+    console.error("[RabbitMQ] Connection closed. Reconnecting...");
+    connection = null;
+    channels.clear();
+    setTimeout(defineQueueConnection, 3000);
+  });
+
   await useStorage('ampq').setItemRaw('connection', newConnection)
 
   return newConnection
