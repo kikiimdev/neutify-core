@@ -87,12 +87,7 @@ export const defineQueueConnection = async () => {
     connectionOptions
   )
 
-  newConnection.on("error", err => {
-    console.error("[RabbitMQ] Connection error", err);
-  });
-
-  newConnection.on("close", () => {
-    console.error("[RabbitMQ] Connection closed. Reconnecting...");
+  const restartConnection = async () => {
     connection = null;
     const existingChannels = channels.keys()
     channels.clear();
@@ -102,6 +97,21 @@ export const defineQueueConnection = async () => {
         await defineQueueChannel(c, channel)
       }
     }, 3000);
+  }
+
+  newConnection.on("error", async (err) => {
+    // [RabbitMQ] Connection error Error:
+    // Channel closed by server: 406 (PRECONDITION-FAILED) with message
+    // "PRECONDITION_FAILED - delivery acknowledgement on channel 12 timed out.
+    // Timeout value used: 1800000 ms.
+    // This timeout value can be configured, see consumers doc guide to learn more"
+    console.error("[RabbitMQ] Connection error", err);
+    await restartConnection()
+  });
+
+  newConnection.on("close", async () => {
+    console.error("[RabbitMQ] Connection closed. Reconnecting...");
+    await restartConnection()
   });
 
   await useStorage('ampq').setItemRaw('connection', newConnection)
