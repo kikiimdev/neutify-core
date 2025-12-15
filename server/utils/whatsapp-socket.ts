@@ -246,7 +246,7 @@ export async function defineWhatsAppSocket<Device>(
           content,
         };
 
-        console.log(`New message from ${sender.name} (${sender.phone})`);
+        console.log(`New message from ${sender.name} (${sender.phone})`, data);
 
         // TODO: create webhook for incoming message
         // console.log('upcomingMessage ', JSON.stringify(m, undefined, 2));
@@ -262,6 +262,11 @@ export async function defineWhatsAppSocket<Device>(
           const isMatch =
             !webhook.match ||
             (webhook.match && typeof webhook.match === "string");
+
+          console.log(
+            `Webhook ${webhook.url} match: ${isMatch}`,
+            webhook.match
+          );
           if (isMatch) {
             if (
               data.content.text &&
