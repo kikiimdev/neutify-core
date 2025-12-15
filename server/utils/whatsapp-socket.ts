@@ -185,9 +185,13 @@ export async function defineWhatsAppSocket<Device>(
         if (!m.message) return; // if there is no text or media message
         if (m.key.fromMe) return;
 
+        const phoneNumber = m.key.remoteJid?.includes("lid")
+          ? (m.key as { remoteJidAlt: string }).remoteJidAlt
+          : m.key.remoteJid!;
+
         const sender = {
-          jId: parseContactId(m.key.remoteJid).jId,
-          phone: parseContactId(m.key.remoteJid).phoneNumber,
+          jId: parseContactId(phoneNumber).jId,
+          phone: parseContactId(phoneNumber).phoneNumber,
           name: m.verifiedBizName || m.pushName,
         };
         const content: Record<string, unknown> = {};
@@ -199,7 +203,7 @@ export async function defineWhatsAppSocket<Device>(
           m.message?.imageMessage?.caption ||
           m.message?.extendedTextMessage?.text;
         if (text) {
-          content.text = text;
+          content.text = encodeURIComponent(text);
         }
 
         // if the message is an image
@@ -241,7 +245,8 @@ export async function defineWhatsAppSocket<Device>(
         }
 
         const data = {
-          sender,
+          // sender,
+          sender: sender.phone,
           messageType,
           content,
         };
@@ -261,12 +266,17 @@ export async function defineWhatsAppSocket<Device>(
         for (const webhook of webhooks) {
           const isMatch =
             !webhook.match ||
-            (webhook.match && typeof webhook.match === "string");
+            (webhook.match &&
+              RegExp(webhook.match).test(
+                (data.content as { text: string }).text
+              ));
 
           console.log(
             `Webhook ${webhook.url} match: ${isMatch}`,
             webhook.match
           );
+
+          console.log({ webhookUrl: webhook.url, data });
           if (isMatch) {
             if (
               data.content.text &&
@@ -276,11 +286,11 @@ export async function defineWhatsAppSocket<Device>(
               let tryCount = 0;
               const sendWebhook = async () => {
                 try {
-                  await $fetch(webhook.url, {
+                  const result = await $fetch(webhook.url, {
                     method: "POST",
-                    body: JSON.stringify(data),
+                    body: data,
                   });
-                  console.log(`Webhook ${webhook.url} triggered`);
+                  console.log(`Webhook ${webhook.url} triggered`, result);
                   tryCount = 0;
                 } catch (error) {
                   console.error(
