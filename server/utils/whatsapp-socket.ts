@@ -264,16 +264,17 @@ export async function defineWhatsAppSocket<Device>(
             }
           )?.webhooks || [];
         for (const webhook of webhooks) {
+          const match = encodeURIComponent(webhook.match || "");
           const isMatch =
-            !webhook.match ||
-            (webhook.match &&
-              RegExp(webhook.match).test(
+            !match ||
+            (match &&
+              RegExp(match).test(
                 (data.content as { text: string }).text
               ));
 
           console.log(
             `Webhook ${webhook.url} match: ${isMatch}`,
-            webhook.match
+            match
           );
 
           console.log({ webhookUrl: webhook.url, data });
@@ -281,7 +282,7 @@ export async function defineWhatsAppSocket<Device>(
             if (
               data.content.text &&
               typeof data.content.text === "string" &&
-              data.content.text.includes(webhook.match)
+              data.content.text.includes(match)
             ) {
               let tryCount = 0;
               const sendWebhook = async () => {
