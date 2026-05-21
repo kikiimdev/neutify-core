@@ -63,7 +63,7 @@ export async function defineWhatsAppSocket<Device>(
     // printQRInTerminal: true,
     auth: state,
     // msgRetryCounterCache,
-    generateHighQualityLinkPreview: true,
+    // generateHighQualityLinkPreview: true, // <--- disabled for error `Error: ENOENT: no such file or directory, open `
     // ignore all broadcast messages -- to receive the same
     // comment the line below out
     shouldIgnoreJid: (jid) => isJidBroadcast(jid),
